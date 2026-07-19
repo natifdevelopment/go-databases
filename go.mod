@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.2
+	gorm.io/plugin/dbresolver v1.6.0
 )
 
 require (
@@ -18,3 +19,5 @@ require (
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 )
+
+replace github.com/natifdevelopment/go-types => ../types

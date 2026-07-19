@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/dbresolver"
 )
 
 // PostgreConfig holds the configuration for a PostgreSQL connection.
@@ -17,6 +18,7 @@ type PostgreConfig struct {
 	Password string
 	DbName   string
 	SSLMode  string
+	Slave    *PostgreConfig
 }
 
 // PostgreConn is the global GORM DB connection. Services should call
@@ -66,6 +68,19 @@ func PostgreConnection(config PostgreConfig) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	if config.Slave != nil && config.Slave.Host != "" {
+		slaveDSN := fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+			config.Slave.Host, config.Slave.Port, config.Slave.User, config.Slave.Password, config.Slave.DbName, config.Slave.SSLMode,
+		)
+		if err := db.Use(dbresolver.Register(dbresolver.Config{
+			Replicas: []gorm.Dialector{postgres.Open(slaveDSN)},
+			policy:   dbresolver.RandomPolicy{},
+		}).SetMaxOpenConns(100).SetMaxIdleConns(10).SetConnMaxLifetime(time.Hour)); err != nil {
+			return nil, fmt.Errorf("databases: failed to register slave replica: %w", err)
+		}
+	}
 
 	return db, nil
 }
