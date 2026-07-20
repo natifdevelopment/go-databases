@@ -76,7 +76,7 @@ func PostgreConnection(config PostgreConfig) (*gorm.DB, error) {
 		)
 		if err := db.Use(dbresolver.Register(dbresolver.Config{
 			Replicas: []gorm.Dialector{postgres.Open(slaveDSN)},
-			policy:   dbresolver.RandomPolicy{},
+			Policy:   dbresolver.RandomPolicy{},
 		}).SetMaxOpenConns(100).SetMaxIdleConns(10).SetConnMaxLifetime(time.Hour)); err != nil {
 			return nil, fmt.Errorf("databases: failed to register slave replica: %w", err)
 		}
