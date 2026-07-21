@@ -29,9 +29,21 @@ var PostgreConn *gorm.DB
 // Services should populate this before calling SetupDatabase().
 var MigrationModels []interface{}
 
+// DefaultPostgreConfig is the global PostgreSQL configuration used by
+// SetupDatabase() when no explicit config is passed. Services should set it
+// from configs.* after calling configs.SetupEnvironment().
+var DefaultPostgreConfig PostgreConfig
+
 // SetupDatabase connects to PostgreSQL and runs auto-migration.
-func SetupDatabase(config PostgreConfig) error {
-	conn, err := PostgreConnection(config)
+// If no config is provided, DefaultPostgreConfig is used; otherwise the first
+// supplied config is used, preserving the existing explicit-pass style.
+func SetupDatabase(config ...PostgreConfig) error {
+	cfg := DefaultPostgreConfig
+	if len(config) > 0 {
+		cfg = config[0]
+	}
+
+	conn, err := PostgreConnection(cfg)
 	if err != nil {
 		return err
 	}
